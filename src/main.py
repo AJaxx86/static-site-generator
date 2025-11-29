@@ -1,4 +1,4 @@
-from testnode import TextNode
+from textnode import TextNode
 
 print(TextNode("this is the first sentence", "bold"))
 print(TextNode("harry pottah!", "italic"))
