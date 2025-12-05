@@ -1,5 +1,5 @@
 import unittest
-from md_format import split_nodes_delimiter
+from md_format import split_nodes_delimiter, extract_markdown_images, extract_markdown_links
 from textnode import TextNode, TextType
 
 class TestSplitNodesDelimiter(unittest.TestCase):
@@ -49,10 +49,57 @@ class TestSplitNodesDelimiter(unittest.TestCase):
     def test_close_delimiters(self):
         node = TextNode("Testing **close** **delimiters** for testing purposes.", TextType.TEXT)
         new_node = split_nodes_delimiter([node], "**", TextType.BOLD)
-        print(f"Close delimiter test result: {new_node}")
         self.assertEqual(new_node, [TextNode("Testing ", TextType.TEXT), TextNode("close", TextType.BOLD), TextNode(" ", TextType.TEXT), TextNode("delimiters", TextType.BOLD), TextNode(" for testing purposes.", TextType.TEXT)])
 
     def test_missing_delimiter(self):
         node = TextNode("This is a _warning for missing formatting", TextType.TEXT)
         with self.assertRaises(Exception):
             split_nodes_delimiter([node], "_", TextType.ITALIC)
+
+    def test_extract_md_images(self):
+        matches = extract_markdown_images(
+            "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png)"
+        )
+        self.assertListEqual([("image", "https://i.imgur.com/zjjcJKZ.png")], matches)
+    
+    def test_extract_md_links(self):
+        matches = extract_markdown_links(
+            "Go to [Google](https://google.com) for more information."
+        )
+        self.assertListEqual([("Google", "https://google.com")], matches)
+    
+    def test_extract_multiple_md_images(self):
+        matches = extract_markdown_images(
+            "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png) and another ![image](https://i.imgur.com/zjjcJKZ.png)"
+        )
+        self.assertListEqual([("image", "https://i.imgur.com/zjjcJKZ.png"), ("image", "https://i.imgur.com/zjjcJKZ.png")], matches)
+
+    def test_extract_multiple_md_links(self):
+        matches = extract_markdown_links(
+            "Go to [Google](https://google.com) and [GitHub](https://github.com) for more information."
+        )
+        self.assertListEqual([("Google", "https://google.com"), ("GitHub", "https://github.com")], matches)
+    
+    def test_no_md_images(self):
+        matches = extract_markdown_images("This is text with no images.")
+        self.assertListEqual([], matches)
+    
+    def test_no_md_links(self):
+        matches = extract_markdown_links("This is text with no links.")
+        self.assertListEqual([], matches)
+        
+    def test_extract_md_images_ignores_links(self):
+        matches = extract_markdown_images("This is text with a [link](https://google.com).")
+        self.assertListEqual([], matches)
+    
+    def test_extract_md_links_ignores_images(self):
+        matches = extract_markdown_links("This is text with an ![image](https://i.imgur.com/zjjcJKZ.png).")
+        self.assertListEqual([], matches)
+    
+    def test_extract_empty_md_images(self):
+        matches = extract_markdown_images("")
+        self.assertListEqual([], matches)
+    
+    def test_extract_empty_md_links(self):
+        matches = extract_markdown_links("")
+        self.assertListEqual([], matches)
