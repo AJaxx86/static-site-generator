@@ -28,6 +28,10 @@ def split_nodes_image(old_nodes):
     for node in old_nodes:
         original_text = node.text
         sections = extract_markdown_images(original_text)
+        if len(sections) == 0:
+            new_nodes.append(node)
+            continue
+
         for section in sections:
             image_alt = section[0]
             image_link = section[1]
@@ -36,6 +40,11 @@ def split_nodes_image(old_nodes):
             new_nodes.append(TextNode(image_alt, TextType.IMAGE, image_link))
             original_text = split_text[1]
 
+    if len(new_nodes) == 0:
+        raise Exception(f"Could not split image nodes.\nOld Nodes: {old_nodes}")
+    for node in new_nodes:
+        if node.text == "":
+            new_nodes.remove(node)
     return new_nodes
 
 def split_nodes_link(old_nodes):
@@ -44,6 +53,10 @@ def split_nodes_link(old_nodes):
     for node in old_nodes:
         original_text = node.text
         sections = extract_markdown_links(original_text)
+        if len(sections) == 0:
+            new_nodes.append(node)
+            continue
+
         for section in sections:
             link_text = section[0]
             link = section[1]
@@ -52,6 +65,9 @@ def split_nodes_link(old_nodes):
             new_nodes.append(TextNode(link_text, TextType.LINK, link))
             original_text = split_text[1]
 
+    for node in new_nodes:
+        if node.text == "":
+            new_nodes.remove(node)
     return new_nodes
 
 def extract_markdown_images(text):
