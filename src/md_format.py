@@ -1,5 +1,14 @@
 import re
+from enum import Enum
 from textnode import TextNode, TextType
+
+class BlockType(Enum):
+    PARAGRAPH = "paragraph"
+    HEADING = "heading"
+    CODE = "code"
+    QUOTE = "quote"
+    UNORDERED_LIST = "unordered_list"
+    ORDERED_LIST = "ordered_list"
 
 def split_nodes_delimiter(old_nodes, delimiter, text_type):
     new_nodes = []
@@ -39,6 +48,9 @@ def split_nodes_image(old_nodes):
             new_nodes.append(TextNode(split_text[0], TextType.TEXT))
             new_nodes.append(TextNode(image_alt, TextType.IMAGE, image_link))
             original_text = split_text[1]
+        
+        if original_text != "":
+            new_nodes.append(TextNode(original_text, TextType.TEXT))
 
     if len(new_nodes) == 0:
         raise Exception(f"Could not split image nodes.\nOld Nodes: {old_nodes}")
@@ -64,11 +76,45 @@ def split_nodes_link(old_nodes):
             new_nodes.append(TextNode(split_text[0], TextType.TEXT))
             new_nodes.append(TextNode(link_text, TextType.LINK, link))
             original_text = split_text[1]
+        
+        if original_text != "":
+            new_nodes.append(TextNode(original_text, TextType.TEXT))
 
     for node in new_nodes:
         if node.text == "":
             new_nodes.remove(node)
     return new_nodes
+
+def text_to_textnodes(text):
+    new_nodes = split_nodes_image(split_nodes_link([TextNode(text, TextType.TEXT)]))
+    new_nodes = split_nodes_delimiter(new_nodes, "**", TextType.BOLD)
+    new_nodes = split_nodes_delimiter(new_nodes, "_", TextType.ITALIC)
+    new_nodes = split_nodes_delimiter(new_nodes, "`", TextType.CODE)
+    
+    return new_nodes
+
+def markdown_to_blocks(text):
+    md_blocks = text.split("\n\n")
+    filtered_blocks = []
+    for block in md_blocks:
+        block = block.strip()
+        if block == "":
+            continue
+        filtered_blocks.append(block)
+    return filtered_blocks
+
+def block_to_block_type(md_block):
+    if md_block.startswith("#"):
+        return BlockType.HEADING
+    if md_block.startswith("```"):
+        return BlockType.CODE
+    if md_block.startswith(">"):
+        return BlockType.QUOTE
+    if md_block.startswith("- "):
+        return BlockType.UNORDERED_LIST
+    if md_block.startswith("1. "):
+        return BlockType.ORDERED_LIST
+    return BlockType.PARAGRAPH
 
 def extract_markdown_images(text):
     return re.findall(r"!\[([^\[\]]*)\]\(([^\(\)]*)\)", text)
