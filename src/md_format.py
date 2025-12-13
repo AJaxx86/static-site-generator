@@ -1,6 +1,7 @@
 import re
 from enum import Enum
 from textnode import TextNode, TextType
+from htmlnode import HTMLNode, LeafNode, ParentNode, text_node_to_html_node
 
 class BlockType(Enum):
     PARAGRAPH = "paragraph"
@@ -9,6 +10,56 @@ class BlockType(Enum):
     QUOTE = "quote"
     UNORDERED_LIST = "unordered_list"
     ORDERED_LIST = "ordered_list"
+
+def markdown_to_html_node(markdown):
+    blocks = markdown_to_blocks(markdown)
+    html_parent = ParentNode("div", [], [])
+
+    for block in blocks:
+        block_type = block_to_block_type(block)
+
+        if block_type == BlockType.PARAGRAPH:
+            block = block.replace("\n", " ")
+            html_parent.children.append(ParentNode("p", text_to_child_nodes(block)))
+
+        if block_type == BlockType.HEADING:
+            h_count = len(block) - len(block.lstrip("#"))
+            filtered_text = block.lstrip("# ")
+            html_parent.children.append(ParentNode(f"h{h_count}", text_to_child_nodes(filtered_text)))
+
+        if block_type == BlockType.CODE:
+            filtered_block = block.lstrip("```\n").rstrip("```")
+            code_node = LeafNode("code", filtered_block)
+            html_parent.children.append(ParentNode("pre", [code_node]))
+
+        if block_type == BlockType.QUOTE:
+            filtered_block = block.lstrip("> ").rstrip("\n")
+            html_parent.children.append(ParentNode("blockquote", text_to_child_nodes(filtered_block)))
+        
+        if block_type == BlockType.UNORDERED_LIST:
+            list_items = block.split("\n")
+            child_nodes = []
+            for i in range(len(list_items)):
+                text = list_items[i].split("- ", 1)[1]
+                child_nodes.append(ParentNode("li", text_to_child_nodes(text)))
+
+            html_parent.children.append(ParentNode("ul", child_nodes))
+        
+        if block_type == BlockType.ORDERED_LIST:
+            list_items = block.split("\n")
+            child_nodes = []
+            for i in range(len(list_items)):
+                text = list_items[i].split(". ", 1)[1]
+                child_nodes.append(ParentNode("li", text_to_child_nodes(text)))
+                
+            html_parent.children.append(ParentNode("ol", child_nodes))
+    
+    return html_parent
+
+def text_to_child_nodes(text):
+    text_nodes = text_to_textnodes(text)
+    html_nodes = [text_node_to_html_node(node) for node in text_nodes]
+    return html_nodes
 
 def split_nodes_delimiter(old_nodes, delimiter, text_type):
     new_nodes = []
