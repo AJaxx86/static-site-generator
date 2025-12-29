@@ -1,4 +1,3 @@
-from textnode import TextNode
+from file_funcs import static_to_public
 
-print(TextNode("this is the first sentence", "bold"))
-print(TextNode("harry pottah!", "italic"))
+static_to_public()
