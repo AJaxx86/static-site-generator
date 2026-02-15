@@ -17,7 +17,7 @@ def static_to_public():
     shutil.copytree("static", "public")
 
 
-def generate_page(from_path, template_path, dest_path):
+def generate_page(base_path, from_path, template_path, dest_path):
     print(f"Generating page from {from_path} to {dest_path} using {template_path}.")
 
     md_content = open(from_path, "r").read()
@@ -26,8 +26,11 @@ def generate_page(from_path, template_path, dest_path):
     html_string = markdown_to_html_node(md_content).to_html()
     title = extract_title(md_content)
 
-    html_file = template.replace("{{ Title }}", title).replace(
-        "{{ Content }}", html_string
+    html_file = (
+        template.replace("{{ Title }}", title)
+        .replace("{{ Content }}", html_string)
+        .replace('href="/"', f'href="{base_path}"')
+        .replace('src="/"', f'src="{base_path}"')
     )
 
     dest_dir = os.path.dirname(dest_path)
@@ -38,10 +41,19 @@ def generate_page(from_path, template_path, dest_path):
         file.write(html_file)
 
 
-def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+def generate_pages_recursive(base_path, dir_path_content, template_path, dest_dir_path):
     for item in Path(dir_path_content).iterdir():
         if item.is_dir():
-            generate_pages_recursive(Path(dir_path_content) / item.name, template_path, Path(dest_dir_path) / item.name.replace(".md", ".html"))
+            generate_pages_recursive(
+                base_path,
+                Path(dir_path_content) / item.name,
+                template_path,
+                Path(dest_dir_path) / item.name.replace(".md", ".html"),
+            )
         else:
-            generate_page(Path(dir_path_content) / item.name, template_path, Path(dest_dir_path) / item.name.replace(".md", ".html"))
-    
+            generate_page(
+                base_path,
+                Path(dir_path_content) / item.name,
+                template_path,
+                Path(dest_dir_path) / item.name.replace(".md", ".html"),
+            )
