@@ -10,11 +10,11 @@ def static_to_public():
     if not os.path.exists("static"):
         raise Exception("Static directory does not exist")
 
-    if os.path.exists("public"):
-        print("Public already exists. Removing...")
-        shutil.rmtree("public")
+    if os.path.exists("docs"):
+        print("Docs already exists. Removing...")
+        shutil.rmtree("docs")
 
-    shutil.copytree("static", "public")
+    shutil.copytree("static", "docs")
 
 
 def generate_page(base_path, from_path, template_path, dest_path):
@@ -29,8 +29,8 @@ def generate_page(base_path, from_path, template_path, dest_path):
     html_file = (
         template.replace("{{ Title }}", title)
         .replace("{{ Content }}", html_string)
-        .replace('href="/"', f'href="{base_path}"')
-        .replace('src="/"', f'src="{base_path}"')
+        .replace('href="/"', f'href="{base_path}')
+        .replace('src="/"', f'src="{base_path}')
     )
 
     dest_dir = os.path.dirname(dest_path)
