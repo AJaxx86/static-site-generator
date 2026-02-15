@@ -196,5 +196,3 @@ def extract_title(markdown: str) -> str:
     if title_match:
         return title_match.group(1)
     raise Exception(f"Title could not be found in markdown: {markdown}")
-        return title_match.group(1)
-    raise Exception(f'Title could not be found in markdown: {markdown}')
